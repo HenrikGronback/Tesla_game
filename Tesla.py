@@ -1,4 +1,5 @@
 import pygame
+#from pygame.locals import *
 import os
 import random
 pygame.font.init()
@@ -58,6 +59,8 @@ def draw_window(blue, flip, bat_level):
         WIN.blit(SUPERCHARGER, (bat.x, bat.y))
     for gas in gas_arr:
         WIN.blit(GAS_CAN, (gas.x, gas.y))
+    pygame.draw.rect(WIN, (124,252,0), pygame.Rect(10,10,bat_level*0.1*(WIDTH-20),HEIGHT*0.1))
+    pygame.draw.rect(WIN, (128,128,128), pygame.Rect(10,10,WIDTH-20,HEIGHT*0.1), 1)
     pygame.display.update()
 
 
