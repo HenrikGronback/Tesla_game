@@ -49,8 +49,8 @@ gas_arr = []
 
 def draw_window(blue, flip, bat_level):
     WIN.blit(ROAD, (0, 0))
-    bat_level_text = BATTERY_FONT.render("Battery level: " + str(bat_level), 1, BLACK)
-    WIN.blit(bat_level_text, (WIDTH - bat_level_text.get_width() - 10, 10))
+    #bat_level_text = BATTERY_FONT.render("Battery level: " + str(bat_level), 1, BLACK)
+    #WIN.blit(bat_level_text, (WIDTH - bat_level_text.get_width() - 10, 10))
     if flip:
         WIN.blit(BLUE_TESLA_FLIP, (blue.x, blue.y))
     else:
