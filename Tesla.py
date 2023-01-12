@@ -1,7 +1,10 @@
 import pygame
-#from pygame.locals import *
 import os
 import random
+
+from car import Car
+from battery import Battery
+from gas import Gas
 pygame.font.init()
 
 WIDTH, HEIGHT = 900, 500
@@ -18,133 +21,129 @@ WINNER_FONT = pygame.font.SysFont('comicsans', 100)
 LOSER_FONT = pygame.font.SysFont('comicsans', 60)
 
 FPS = 100
-TESLA_WIDTH, TESLA_HEIGHT = 395, 127 #592, 191 #1185, 383#395, 127 #448, 176
-ACT_TESLA_WIDTH, ACT_TESLA_HEIGHT = 388, 135
 VEL = 3
 ITEM_VEL = 1
-ACT_TESLA_WIDTH_OFFSET = 60
-ACT_TESLA_HEIGHT_OFFSET = 25
-
-BAT_WIDTH, bat_HEIGHT = 36, 80
-
-GAS_WIDTH, GAS_HEIGHT = 61, 80
+X_OFFSET = 20
 
 
 TESLA_HIT_BAT = pygame.USEREVENT + 1
 TESLA_HIT_GAS = pygame.USEREVENT + 2
+TESLA_NO_JUICE = pygame.USEREVENT + 3
 
-BLUE_TESLA_IMAGE = pygame.image.load((os.path.join('Assets', 'tesla4real11.png')))
-BAT_IMAGE = pygame.image.load((os.path.join('Assets', 'batteri.png')))
-GAS_CAN_IMAGE = pygame.image.load((os.path.join('Assets', 'gas4real11.png')))
-BLUE_TESLA_FLIP = pygame.transform.flip(pygame.transform.scale(BLUE_TESLA_IMAGE, (TESLA_WIDTH, TESLA_HEIGHT)), True, False) #Flip
-BLUE_TESLA = (pygame.transform.scale(BLUE_TESLA_IMAGE, (TESLA_WIDTH, TESLA_HEIGHT)))
-SUPERCHARGER = (pygame.transform.scale(BAT_IMAGE, (BAT_WIDTH, bat_HEIGHT)))
-GAS_CAN = (pygame.transform.scale(GAS_CAN_IMAGE, (GAS_WIDTH, GAS_HEIGHT)))
+
 ROAD_IMAGE = pygame.image.load((os.path.join('Assets', 'roads.jpg')))
 ROAD = pygame.transform.scale(ROAD_IMAGE, (WIDTH, HEIGHT))
 
-bat_arr = []
-gas_arr = []
 
-
-def draw_window(blue, flip, bat_level):
-    WIN.blit(ROAD, (0, 0))
-    #bat_level_text = BATTERY_FONT.render("Battery level: " + str(bat_level), 1, BLACK)
-    #WIN.blit(bat_level_text, (WIDTH - bat_level_text.get_width() - 10, 10))
-    if flip:
-        WIN.blit(BLUE_TESLA_FLIP, (blue.x, blue.y))
+def draw_window(car):
+    WIN.blit(ROAD, (0, 20))
+    pygame.draw.rect(WIN, (0,0,0), pygame.Rect(0,0,(WIDTH),20))
+    if car.flip:
+        WIN.blit(car.image_flip, (car.x, car.y))
     else:
-        WIN.blit(BLUE_TESLA, (blue.x, blue.y))
-    for bat in bat_arr:
-        WIN.blit(SUPERCHARGER, (bat.x, bat.y))
-    for gas in gas_arr:
-        WIN.blit(GAS_CAN, (gas.x, gas.y))
-    pygame.draw.rect(WIN, (124,252,0), pygame.Rect(10,10,bat_level*0.1*(WIDTH-20),HEIGHT*0.1))
-    pygame.draw.rect(WIN, (128,128,128), pygame.Rect(10,10,WIDTH-20,HEIGHT*0.1), 1)
+        WIN.blit(car.image, (car.x, car.y))
+        
+    for bat in car.battery_list:
+        WIN.blit(bat.image, (bat.x,bat.y))
+
+    for gas in car.gas_list:
+        WIN.blit(gas.image, (gas.x, gas.y))
+    
+    pygame.draw.rect(WIN, (124,252,0), pygame.Rect(0,0,car.stateOfCharge*0.1*(WIDTH),20))
+    pygame.draw.rect(WIN, (128,128,128), pygame.Rect(0,0,WIDTH,20), 1)
+   
     pygame.display.update()
 
 
-def handle_blue_movement(blue, flip, keys_pressed):
-    if keys_pressed[pygame.K_LEFT] and blue.x - VEL > 0:  # LEFT
-        blue.x -= VEL
-        flip = False
-    if keys_pressed[pygame.K_RIGHT] and blue.x + VEL < WIDTH - TESLA_WIDTH :  # RIGHT
-        blue.x += VEL
-        flip = True
-    if keys_pressed[pygame.K_UP] and blue.y - VEL > 0:  # UP
-        blue.y -= VEL
-    if keys_pressed[pygame.K_DOWN] and blue.y + VEL < HEIGHT - TESLA_HEIGHT:  # DOWN
-        blue.y += VEL
-    return flip
+def handle_blue_movement(keys_pressed, car):
+    if keys_pressed[pygame.K_LEFT] and car.x - VEL > 0:  # LEFT
+        car.x -= VEL
+        car.flip = False
+        car.stateOfCharge -=car.consumption
+    if keys_pressed[pygame.K_RIGHT] and car.x + VEL < WIDTH - int(car.image.get_width()) :  # RIGHT
+        car.x += VEL
+        car.flip = True
+        car.stateOfCharge -=car.consumption
+    if keys_pressed[pygame.K_UP] and car.y - VEL-X_OFFSET > 0:  # UP
+        car.y -= VEL
+        car.stateOfCharge -=car.consumption
+    if keys_pressed[pygame.K_DOWN] and car.y + VEL < HEIGHT - int(car.image.get_height()):  # DOWN
+        car.y += VEL
+        car.stateOfCharge -=car.consumption
+    if car.stateOfCharge <=0:
+        pygame.event.post(pygame.event.Event(TESLA_NO_JUICE))
+
+    
 
 
-def collision_detection(blue):
+def handle_object_movement(car):
 
-    for bat in bat_arr:
+    for bat in car.battery_list:
         bat.x += ITEM_VEL
-        if blue.colliderect(bat):
-            bat_arr.remove(bat) 
-            pygame.event.post(pygame.event.Event(TESLA_HIT_BAT))
-        elif bat.x > WIDTH:
-            bat_arr.remove(bat) 
 
-    for gas in gas_arr:
+    for gas in car.gas_list:
         gas.x += ITEM_VEL
-        if blue.colliderect(gas):
-            gas_arr.remove(gas)
+
+def check_collision(car):
+    for bat in car.battery_list:
+        offset_x = car.x - bat.x
+        offset_y = car.y - bat.y
+
+        if car.flip:
+            collision = bat.mask.overlap(car.mask_flip, (offset_x, offset_y))
+        else:
+            collision = bat.mask.overlap(car.mask, (offset_x, offset_y))
+        
+        if collision:
+            pygame.event.post(pygame.event.Event(TESLA_HIT_BAT))
+            car.battery_list.remove(bat)
+
+    for gas in car.gas_list:
+        offset_x = car.x - gas.x
+        offset_y = car.y - gas.y
+
+        if car.flip:
+            collision = gas.mask.overlap(car.mask_flip, (offset_x, offset_y))
+        else:
+            collision = gas.mask.overlap(car.mask, (offset_x, offset_y))
+
+        if collision:
             pygame.event.post(pygame.event.Event(TESLA_HIT_GAS))
-        elif gas.x > WIDTH:
-            gas_arr.remove(gas)
+    
+    
+            
 
 
 def draw_winner(text):
     draw_text = WINNER_FONT.render(text, True, GREEN)
     WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width()/2, HEIGHT/2 - draw_text.get_height()/2))
     pygame.display.update()
-    pygame.time.delay(5000)
+    pygame.time.delay(2000)
 
 
 def draw_loser(text):
     draw_text = LOSER_FONT.render(text, True, RED)
     WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width()/2, HEIGHT/2 - draw_text.get_height()/2))
     pygame.display.update()
-    pygame.time.delay(5000)
+    pygame.time.delay(2000)
 
 
-def restart(flip, blue):
-    bat_arr.clear()
-    gas_arr.clear()
-    bat_level = 0
+def restart():
+    WIN.blit(ROAD, (0, 20))
+    pygame.draw.rect(WIN, (0,0,0), pygame.Rect(0,0,(WIDTH),20))
+    main()
 
-    WIN.blit(ROAD, (0, 0))
-    bat_level_text = BATTERY_FONT.render("Battery level: " + str(bat_level), 1, BLACK)
-    WIN.blit(bat_level_text, (WIDTH - bat_level_text.get_width() - 10, 10))
-    if flip:
-        WIN.blit(BLUE_TESLA_FLIP, (blue.x, blue.y))
-    else:
-        WIN.blit(BLUE_TESLA, (blue.x, blue.y))
-
-    bat = pygame.Rect(0, random.randint(0, 500 - bat_HEIGHT), BAT_WIDTH, bat_HEIGHT)
-    gas = pygame.Rect(10, random.randint(0, 500 - GAS_HEIGHT), GAS_WIDTH, GAS_HEIGHT)
-    bat_arr.append(bat)
-    gas_arr.append(gas)
-
-    return bat_level
 
 
 def main():
-    bat = pygame.Rect(0, random.randint(0, 500 - bat_HEIGHT), BAT_WIDTH, bat_HEIGHT)
-    gas = pygame.Rect(10, random.randint(0, 500 - GAS_HEIGHT), GAS_WIDTH, GAS_HEIGHT)
-    blue = pygame.Rect(300, 300, ACT_TESLA_WIDTH, TESLA_HEIGHT)
-
+    car=Car(300,300)
+    battery=Battery(0,0)
+    gas=Gas(0,0)
+    
     i = 0
-    bat_arr.append(bat) 
-    gas_arr.append(gas)
 
     clock = pygame.time.Clock()
     run = True
-    flip = False
-    bat_level = 0
     while run:
         clock.tick(FPS)
         for event in pygame.event.get():
@@ -152,35 +151,41 @@ def main():
                 run = False
             if event.type == TESLA_HIT_BAT:
 
-                bat_level += 1
-                if bat_level == 10:
-                    draw_window(blue, flip, bat_level)
+                car.stateOfCharge += 1
+                if car.stateOfCharge >= 10:
+                    draw_window(car)
                     winner_text = "Tesla fully charged!"
                     draw_winner(winner_text)
-                    bat_level = restart(flip, blue)
+                    restart()
 
             if event.type == TESLA_HIT_GAS:
                 loser_text = "You can't charge a Tesla with gas!"
                 draw_loser(loser_text)
-                bat_level = restart(flip, blue)
+                restart()
+            if event.type == TESLA_NO_JUICE:
+                loser_text = "You ran out of battery!"
+                draw_loser(loser_text)
+                restart()
 
         if i % 500 == 0:
 
-            gas = pygame.Rect(0, random.randint(0, 500 - GAS_HEIGHT), GAS_WIDTH, GAS_HEIGHT)
-            gas_arr.append(gas)
+            gas = Gas(0, random.randint(20, 500 - gas.image.get_height()))
+            car.gas_list.append(gas)
 
         if i % 200 == 0:
-            bat = pygame.Rect(0, random.randint(0, 500 - bat_HEIGHT), BAT_WIDTH, bat_HEIGHT)
-            bat_arr.append(bat)
+            battery = Battery(0,random.randint(20, 500 - battery.image.get_height()))
+            car.battery_list.append(battery)
+            
 
         keys_pressed = pygame.key.get_pressed()
 
-        flip = handle_blue_movement(blue, flip, keys_pressed)
+        handle_blue_movement(keys_pressed, car)
 
-        draw_window(blue, flip, bat_level)
-        collision_detection(blue)
+        check_collision(car)
+        draw_window(car)
+        handle_object_movement(car)
+        
         i = i+1
-        print(i)
 
     pygame.quit()
 
