@@ -7,7 +7,7 @@ pygame.font.init()
 
 pygame.display.set_caption("Tesla!")
 
-def main():
+def main(): 
     current_level = "level1"
     quit = False
     

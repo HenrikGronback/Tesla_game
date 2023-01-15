@@ -8,28 +8,6 @@ from battery import Battery
 from honda import Honda
 from gas import Gas
 
-TESLA_HIT_BAT = pygame.USEREVENT + 1
-TESLA_HIT_GAS = pygame.USEREVENT + 2
-TESLA_NO_JUICE = pygame.USEREVENT + 3
-TESLA_HIT_HONDA = pygame.USEREVENT + 4
-
-pygame.font.init()
-BATTERY_FONT = pygame.font.SysFont('comicsans', 40)
-WINNER_FONT = pygame.font.SysFont('comicsans', 100)
-LOSER_FONT = pygame.font.SysFont('comicsans', 60)
-font=pygame.font.Font(None,36)
-
-
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (0, 128, 0)
-RED = (255, 0, 0)
-
-ROAD_IMAGE = pygame.image.load((os.path.join('Assets', 'roads.jpg')))
-WIDTH, HEIGHT = 900, 500
-X_OFFSET = 20
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
-FPS = 100
 
 class Level3(Level1):
     def __init__(self):
@@ -43,7 +21,7 @@ class Level3(Level1):
         
 
     def level3(self, quit):
-        car=ModelS(WIDTH/2-(self.modelS.image.get_width()/2), 170)
+        car=ModelS(self.WIDTH/2-(self.modelS.image.get_width()/2), 170)
         battery=Battery(0,0)
         gas=Gas(0,0)
         honda=Honda(0,0)
@@ -56,13 +34,13 @@ class Level3(Level1):
 
         clock = pygame.time.Clock()
         while self.run:
-            clock.tick(FPS)
+            clock.tick(self.FPS)
             text = ""
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.run = False
                     quit = True
-                if event.type == TESLA_HIT_BAT:
+                if event.type == self.TESLA_HIT_BAT:
                     
                     car.stateOfCharge += 1
                     if car.stateOfCharge >= 10:
@@ -73,23 +51,23 @@ class Level3(Level1):
                         self.draw_window(car, text)
                         self.draw_winner(winner_text)
 
-                if event.type == TESLA_HIT_GAS:
+                if event.type == self.TESLA_HIT_GAS:
                     loser_text = "You can't charge a Tesla with gas!"
                     text = ""
                     self.draw_window(car, text)
                     self.draw_loser(loser_text)
-                    self.restart(quit)
-                if event.type == TESLA_NO_JUICE:
+                    quit=self.restart(quit, self.level3)
+                if event.type == self.TESLA_NO_JUICE:
                     loser_text = "You ran out of battery!"
                     text = ""
                     self.draw_window(car, text)
                     self.draw_loser(loser_text)
-                    self.restart(quit)
+                    quit=self.restart(quit, self.level3)
 
-                if event.type == TESLA_HIT_HONDA:
+                if event.type == self.TESLA_HIT_HONDA:
                     loser_text = "Oh no, you got Honda bumped!"
                     self.draw_loser(loser_text)
-                    self.restart(quit)
+                    quit=self.restart(quit, self.level3)
 
             if i % 500 == 0:
                 randomNumber = random.randint(0,1)
@@ -98,7 +76,7 @@ class Level3(Level1):
                     gas.item_vel = random.randint(1,3)
                     car.gas_list_right.append(gas)
                 else:
-                    gas = Gas(WIDTH, random.randint(20, 500 - gas.image.get_height()))
+                    gas = Gas(self.WIDTH, random.randint(20, 500 - gas.image.get_height()))
                     gas.item_vel = random.randint(1,3)
                     car.gas_list_left.append(gas)
                 
@@ -112,7 +90,7 @@ class Level3(Level1):
                     battery.item_vel = random.randint(1,3)
                     car.battery_list_right.append(battery)
                 else:
-                    battery = Battery(WIDTH,random.randint(20, 500 - battery.image.get_height()))
+                    battery = Battery(self.WIDTH,random.randint(20, 500 - battery.image.get_height()))
                     battery.item_vel = random.randint(1,3)
                     car.battery_list_left.append(battery)
 
@@ -147,11 +125,5 @@ class Level3(Level1):
             i = i+1
             
         return quit
-
-    def restart(self, quit):
-        WIN.blit(self.background, (0, 20))
-        pygame.draw.rect(WIN, (0,0,0), pygame.Rect(0,0,(WIDTH),20))
-        
-        self.level3(quit)
         
 
