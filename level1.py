@@ -185,10 +185,9 @@ class Level1():
             offset_y = car.y - bat.y
 
             if car.flip:
-                collision = bat.mask.overlap(car.mask_flip, (offset_x, offset_y))
+                collision = bat.mask.overlap(car.mask_flip, (int(offset_x), int(offset_y)))
             else:
-                collision = bat.mask.overlap(car.mask, (offset_x, offset_y))
-            
+                collision = bat.mask.overlap(car.mask, (int(offset_x), int(offset_y)))
             if collision:
                 pygame.event.post(pygame.event.Event(TESLA_HIT_BAT))
                 car.battery_list_right.remove(bat)
@@ -198,10 +197,9 @@ class Level1():
             offset_y = car.y - bat.y
 
             if car.flip:
-                collision = bat.mask.overlap(car.mask_flip, (offset_x, offset_y))
+                collision = bat.mask.overlap(car.mask_flip, (int(offset_x), int(offset_y)))
             else:
-                collision = bat.mask.overlap(car.mask, (offset_x, offset_y))
-            
+                collision = bat.mask.overlap(car.mask, (int(offset_x), int(offset_y)))
             if collision:
                 pygame.event.post(pygame.event.Event(TESLA_HIT_BAT))
                 car.battery_list_left.remove(bat)
@@ -211,9 +209,9 @@ class Level1():
             offset_y = car.y - gas.y
 
             if car.flip:
-                collision = gas.mask.overlap(car.mask_flip, (offset_x, offset_y))
+                collision = gas.mask.overlap(car.mask_flip, (int(offset_x), int(offset_y)))
             else:
-                collision = gas.mask.overlap(car.mask, (offset_x, offset_y))
+                collision = gas.mask.overlap(car.mask, ((int(offset_x), int(offset_y))))
 
             if collision:
                 pygame.event.post(pygame.event.Event(TESLA_HIT_GAS))
@@ -223,9 +221,9 @@ class Level1():
             offset_y = car.y - gas.y
 
             if car.flip:
-                collision = gas.mask.overlap(car.mask_flip, (offset_x, offset_y))
+                collision = gas.mask.overlap(car.mask_flip, (int(offset_x), int(offset_y)))
             else:
-                collision = gas.mask.overlap(car.mask, (offset_x, offset_y))
+                collision = gas.mask.overlap(car.mask, (int(offset_x), int(offset_y)))
 
             if collision:
                 pygame.event.post(pygame.event.Event(TESLA_HIT_GAS))
@@ -235,12 +233,13 @@ class Level1():
             offset_y = car.y - honda.y
 
             if car.flip:
-                collision = honda.mask_flip.overlap(car.mask_flip, (offset_x, offset_y))
+                collision = honda.mask_flip.overlap(car.mask_flip, (int(offset_x), int(offset_y)))
             else:
-                collision = honda.mask_flip.overlap(car.mask, (offset_x, offset_y))
+                collision = honda.mask_flip.overlap(car.mask, (int(offset_x), int(offset_y)))
 
             if collision:
                 pygame.event.post(pygame.event.Event(TESLA_HIT_HONDA))
+
 
 
             
