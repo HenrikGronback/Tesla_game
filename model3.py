@@ -13,6 +13,7 @@ class Model3:
         self.battery_list_left = []
         self.gas_list_right = []
         self.gas_list_left = []
+        self.honda_list = []
         self.image = pygame.image.load((os.path.join('Assets', 'model3.png')))
         self.image_flip = pygame.transform.flip(self.image, True, False) #Flip
         self.mask = pygame.mask.from_surface(self.image)

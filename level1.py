@@ -1,6 +1,7 @@
 import pygame
 import random
 import os
+import math
 
 from model3 import Model3
 from battery import Battery
@@ -12,6 +13,7 @@ from gas import Gas
 TESLA_HIT_BAT = pygame.USEREVENT + 1
 TESLA_HIT_GAS = pygame.USEREVENT + 2
 TESLA_NO_JUICE = pygame.USEREVENT + 3
+TESLA_HIT_HONDA = pygame.USEREVENT + 4
 
 pygame.font.init()
 BATTERY_FONT = pygame.font.SysFont('comicsans', 40)
@@ -25,6 +27,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 128, 0)
 RED = (255, 0, 0)
+YELLOW = (255,255,0)
 
 ROAD_IMAGE = pygame.image.load((os.path.join('Assets', 'roads.jpg')))
 WIDTH, HEIGHT = 900, 500
@@ -37,13 +40,12 @@ class Level1():
     
     def __init__(self):
         self.background = pygame.transform.scale(ROAD_IMAGE, (WIDTH, HEIGHT))
-        self.item_vel = 1
         self.run = True
-        #self.quit = quit
+        self.model3 = Model3(0,0)
 
 
     def level1(self, quit):
-        car=Model3(300,300)
+        car=Model3(WIDTH/2-(self.model3.image.get_width()/2), 170)
         battery=Battery(0,0)
         gas=Gas(0,0)
         i = 0
@@ -95,9 +97,10 @@ class Level1():
             i = i+1
         return quit
 
-    def draw_window(self,car):
+    def draw_window(self,car, text=""):
         WIN.blit(self.background, (0, 20))
         pygame.draw.rect(WIN, (0,0,0), pygame.Rect(0,0,(WIDTH),20))
+
         if car.flip:
             WIN.blit(car.image_flip, (car.x, car.y))
         else:
@@ -114,6 +117,9 @@ class Level1():
 
         for gas in car.gas_list_left:
             WIN.blit(gas.image, (gas.x, gas.y))
+
+        for honda in car.honda_list:
+            WIN.blit(honda.image_flip, (honda.x, honda.y))
         
         pygame.draw.rect(WIN, (128,128,128), pygame.Rect(0,0,WIDTH,20), 1)
         if car.stateOfCharge < 1:
@@ -123,6 +129,9 @@ class Level1():
             pygame.draw.rect(WIN, (255,165,0), pygame.Rect(0,0,car.stateOfCharge*0.1*(WIDTH),20))
         else:
             pygame.draw.rect(WIN, (124,252,0), pygame.Rect(0,0,car.stateOfCharge*0.1*(WIDTH),20))
+
+        draw_text = LOSER_FONT.render(text, True, YELLOW)
+        WIN.blit(draw_text, (WIDTH/2 - draw_text.get_width()/2, HEIGHT/2 - draw_text.get_height()/2))
         
     
         pygame.display.update()
@@ -148,19 +157,27 @@ class Level1():
     
 
 
-    def handle_object_movement(self, car):
+    def handle_object_movement(self, car, amplitude = 0):
         
             for bat in car.battery_list_right:
-                bat.x += self.item_vel
+                bat.x += bat.item_vel
 
             for bat in car.battery_list_left:
-                bat.x -= self.item_vel
+                bat.x -= bat.item_vel
 
             for gas in car.gas_list_right:
-                gas.x += self.item_vel
+                gas.x += gas.item_vel
 
             for gas in car.gas_list_left:
-                gas.x -= self.item_vel
+                gas.x -= gas.item_vel
+
+            for honda in car.honda_list:
+                honda.x += honda.car_vel
+                angle = 2*math.pi*honda.x/(WIDTH/3)
+                sin_value = math.sin(angle) * amplitude
+                honda.y += sin_value
+                if honda.y > HEIGHT:
+                    honda.y = HEIGHT-honda.image.get_height()
 
     def check_collision(self, car):
         for bat in car.battery_list_right:
@@ -212,6 +229,18 @@ class Level1():
 
             if collision:
                 pygame.event.post(pygame.event.Event(TESLA_HIT_GAS))
+
+        for honda in car.honda_list:
+            offset_x = car.x - honda.x
+            offset_y = car.y - honda.y
+
+            if car.flip:
+                collision = honda.mask_flip.overlap(car.mask_flip, (offset_x, offset_y))
+            else:
+                collision = honda.mask_flip.overlap(car.mask, (offset_x, offset_y))
+
+            if collision:
+                pygame.event.post(pygame.event.Event(TESLA_HIT_HONDA))
 
 
             
