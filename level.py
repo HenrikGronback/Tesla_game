@@ -11,8 +11,8 @@ class Level:
         self.TESLA_NO_JUICE = pygame.USEREVENT + 3
         self.TESLA_HIT_HONDA = pygame.USEREVENT + 4
         self.BATTERY_FONT = pygame.font.SysFont('comicsans', 40)
-        self.WINNER_FONT = pygame.font.SysFont('comicsans', 100)
-        self.LOSER_FONT = pygame.font.SysFont('comicsans', 60)
+        self.WINNER_FONT = pygame.font.SysFont('comicsans', 90)
+        self.LOSER_FONT = pygame.font.SysFont('comicsans', 50)
         self.WHITE = (255, 255, 255)
         self.BLACK = (0, 0, 0)
         self.GREEN = (0, 128, 0)

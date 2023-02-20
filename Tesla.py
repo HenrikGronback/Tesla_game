@@ -8,7 +8,7 @@ pygame.font.init()
 pygame.display.set_caption("Tesla!")
 
 def main(): 
-    current_level = "level1"
+    current_level = "level3"
     quit = False
     
     while not quit:
